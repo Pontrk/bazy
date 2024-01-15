@@ -1,0 +1,5 @@
+SELECT insert_klient_data('lll','hhh','Jan','Kowalski',NULL,NULL);
+SELECT insert_pracownik_data('pracownik1','hhh','Jan','Kowalski',NULL,NULL);
+SELECT insert_pracownik_data('pracownik2','hhh','Jan','Kowalski',NULL,NULL);
+SELECT insert_towar_data('a','b','c',NULL,'pracownik1',9);
+

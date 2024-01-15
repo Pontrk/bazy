@@ -1,0 +1,14 @@
+CREATE USER administrator SUPERUSER;
+CREATE USER klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on klienci to klient;
+    GRANT SELECT on towary to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on zamowienia to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on koszyki to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on towary_w_koszyku to klient;
+CREATE USER pracownik;
+    GRANT SELECT, INSERT, UPDATE, DELETE on klienci to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on towary to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on zamowienia to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on koszyki to klient;
+    GRANT SELECT, INSERT, UPDATE, DELETE on towary_w_koszyku to klient;
+

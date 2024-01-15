@@ -1,0 +1,250 @@
+--FUNKCJE KLIENTA
+
+--Rejestracja użytkownika
+CREATE OR REPLACE FUNCTION insert_klient_data(
+    login1 varchar(255),
+    haslo1 varchar(255),
+    imie1 varchar(255),
+    nazwisko1 varchar(255),
+    email1 varchar(255),
+    telefon1 varchar(255),
+    adres1 varchar(255)
+    )
+    RETURNS VOID AS $$
+    BEGIN
+        INSERT INTO klienci(login, haslo, imie, nazwisko,adres, email,telefon) 
+        VALUES 
+        (login1, haslo1, imie1, nazwisko1,adres1,email1,telefon1);
+    END;
+    $$ LANGUAGE plpgsql;
+
+-- AUTORYZACJA, LOGIN
+CREATE OR REPLACE FUNCTION klient_login( login1 varchar(255),
+    haslo1 varchar(255))
+RETURNS BOOLEAN AS $$
+DECLARE
+    login_test BOOLEAN;
+BEGIN
+    SELECT EXISTS(
+        SELECT 1 FROM klienci WHERE login1 = klienci.login AND haslo1 = klienci.haslo
+    ) INTO login_test;
+    RETURN login_test;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Zarządzanie kontem, pobranie danych
+CREATE OR REPLACE FUNCTION klient_get_my_data(
+    login1 varchar(255)
+    )
+    RETURNS TABLE(a INTEGER,b varchar(255),c varchar(255),d varchar(255),e varchar(255),f varchar(255)) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT klientid,login,imie,nazwisko,email,telefon from klienci where login1 = klienci.login;
+    END;
+    $$ LANGUAGE plpgsql;
+
+-- Zarządzanie kontem, zmiana danych
+CREATE OR REPLACE FUNCTION klient_change_my_data(
+    login1 varchar(255),
+    haslo1 varchar(255),
+    imie1 varchar(255),
+    nazwisko1 varchar(255),
+    email1 varchar(255),
+    telefon1 varchar(255)
+    )
+    RETURNS VOID AS $$
+    BEGIN
+
+        if haslo1 IS NOT NULL THEN
+            UPDATE klienci set klienci.haslo = haslo1 where klienci.login = login1;
+        END IF;
+
+        if imie1 IS NOT NULL THEN
+            UPDATE klienci set klienci.imie = imie1 where klienci.login = login1;
+        END IF;
+
+        if nazwisko1 IS NOT NULL THEN
+            UPDATE klienci set klienci.nazwisko = nazwisko1 where klienci.login = login1;
+        END IF;
+
+        if email1 IS NOT NULL THEN
+            UPDATE klienci set klienci.email = email1 where klienci.login = login1;            
+        END IF;
+
+        if telefon1 IS NOT NULL THEN
+            UPDATE klienci set klienci.telefon = telefon1 where klienci.login = login1;                        
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql;
+
+-- Zarządzanie kontem, usunięcie konta
+CREATE OR REPLACE FUNCTION delete_my_data_k(
+    login1 varchar(255)
+    )
+    RETURNS VOID AS $$
+    BEGIN
+        DELETE FROM klienci WHERE klienci.login = login1;
+    END;
+    $$ LANGUAGE plpgsql;
+
+
+--pobranie listy towarów
+CREATE OR REPLACE FUNCTION klient_get_towary(
+    )
+    RETURNS TABLE(a INTEGER,b varchar(255),c varchar(255),d varchar(255),e DATE,f numeric(19,2)) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT towarid,nazwa,kategoria,producent,data_waznosci,cena from towary where login1 = klienci.login;
+    END;
+    $$ LANGUAGE plpgsql;
+
+--lista producentów do filtorowania
+CREATE OR REPLACE FUNCTION get_producent(
+    )
+    RETURNS TABLE(producenci varchar(255)) AS $$
+    BEGIN
+        RETURN QUERY SELECT DISTINCT producent FROM towary;
+    END;
+    $$ LANGUAGE plpgsql;
+
+--lista kategorii do filtrowania
+CREATE OR REPLACE FUNCTION get_category(
+    )
+    RETURNS TABLE(kategorie varchar(255)) AS $$
+    BEGIN
+        RETURN QUERY SELECT DISTINCT kategoria FROM towary;
+    END;
+    $$ LANGUAGE plpgsql;
+--------------------------------------------------------------------------------------------------------------------------------
+--FUNKCJE PRACOWNIKA
+
+CREATE OR REPLACE FUNCTION insert_towar_data(
+    nazwa1 varchar(255),
+    kategoria1 varchar(255),
+    producent1 varchar(255),
+    data_waznosci1 date,
+    prac_login varchar(255),
+    cena1 numeric(19,2)
+    )
+    RETURNS VOID AS $$
+    DECLARE
+        p_id INTEGER;
+    BEGIN
+        SELECT pracownikid INTO p_id FROM pracownicy WHERE pracownicy.login = prac_login;
+        INSERT INTO towary(nazwa, kategoria, producent, data_waznosci,cena,pracownikid) 
+        VALUES 
+        (nazwa1, kategoria1, producent1, data_waznosci1,cena1,p_id);
+    END;
+    $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION insert_pracownik_data(
+    login1 varchar(255),
+    haslo1 varchar(255),
+    imie1 varchar(255),
+    nazwisko1 varchar(255),
+    email1 varchar(255),
+    telefon1 varchar(255)
+)
+    RETURNS VOID AS $$
+    BEGIN
+        INSERT INTO pracownicy(login, haslo, imie, nazwisko,rola,email,telefon) 
+        VALUES 
+        (login1, haslo1, imie1, nazwisko1,'norm',email1,telefon1);
+    END;
+    $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pracownik_login(
+    login1 varchar(255),
+    haslo1 varchar(255)
+    )
+    RETURNS TEXT AS $$
+    DECLARE
+    rola1 TEXT;
+    BEGIN
+        SELECT rola FROM pracownicy where login1 = pracownicy.login AND haslo1 = pracownicy.haslo INTO rola1;
+        IF rola1 IS NULL THEN
+            RAISE EXCEPTION 'ZŁY LOGIN ILUB HASŁO';
+        END IF;
+            RETURN rola1;
+       
+    END
+    $$ LANGUAGE plpgsql;
+--usuniecie produktu
+CREATE OR REPLACE FUNCTION usun_produkt(
+	p_towarID INTEGER,
+	prac_login varchar(255)
+	)
+	RETURNS VOID AS $$
+BEGIN
+	SELECT pracownikid INTO p_id FROM pracownicy WHERE pracownicy.login = prac_login;
+    DELETE FROM Towary WHERE towarID = p_towarID;
+END;
+$$ LANGUAGE plpgsql;
+--edytowanie danych prodktu  produktu
+CREATE OR REPLACE FUNCTION aktualizuj_produkt(
+    p_towarID INTEGER,
+    p_nazwa varchar(255),
+    p_cena numeric(19,2),
+    p_kategoria varchar(255),
+    p_producent varchar(255),
+	prac_login varchar(255),
+    p_data_waznosci DATE
+) RETURNS VOID AS $$
+BEGIN
+	SELECT pracownikid INTO p_id FROM pracownicy WHERE pracownicy.login = prac_login;
+    UPDATE Towary
+    SET nazwa = p_nazwa,
+        cena = p_cena,
+        kategoria = p_kategoria,
+        producent = p_producent,
+        data_waznosci = p_data_waznosci,
+		pracownikID = p_id
+    WHERE towarID = p_towarID;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+-- CREATE OR REPLACE FUNCTION dodaj_towar_do_koszyka(
+--     towarid1 INTEGER,
+--     number INTEGER,
+--     login1 varchar(255)
+-- )
+--     RETURNS VOID AS $$
+--     BEGIN
+--         SELECT koszykid from koszyki WHERE klientid = (SELECT klientid from klienci WHERE klienci.login =)
+--         SELECT * FROM zamowienia 
+--     END
+--     $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION aktualizuj_konto(
+    p_pracownikID INTEGER,
+	p_login varchar(255),
+	p_haslo varchar(255),
+    p_imie varchar(255),
+    p_nazwisko varchar(255),
+    p_rola varchar(255),
+    p_telefon varchar(12),
+    p_email varchar(255)
+) RETURNS VOID AS $$
+BEGIN
+    UPDATE Pracownicy
+    SET login = p_login,
+	haslo = p_haslo,
+	imie = p_imie,
+        nazwisko = p_nazwisko,
+	rola = p_rola,
+        email = p_email,
+	telefon = p_telefon
+    WHERE pracownikID = p_uzytkownikID;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION usun_konto(p_pracownikID INTEGER) RETURNS VOID AS $$
+BEGIN
+    DELETE FROM Pracownicy
+    WHERE pracownikID = p_pracownikID;
+END;
+$$ LANGUAGE plpgsql;

@@ -1,0 +1,24 @@
+
+CREATE OR REPLACE FUNCTION increase_koszyk_cena()
+RETURNS TRIGGER AS $$
+BEGIN
+    update koszyki set cena = cena + (SELECT towary.cena from towary where towary.towarid = NEW.towarid) where koszykID = NEW.koszykid;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION decrease_koszyk_cena()
+RETURNS TRIGGER AS $$
+BEGIN
+    update koszyki set cena = cena - (SELECT towary.cena from towary where towary.towarid = OLD.towarid) where koszykID = OLD.koszykid;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE or replace TRIGGER koszyk_suma
+AFTER INSERT on towary_w_koszyku
+FOR EACH ROW EXECUTE FUNCTION increase_koszyk_cena();
+
+CREATE or replace TRIGGER koszyk_suma2
+AFTER DELETE on towary_w_koszyku
+FOR EACH ROW EXECUTE FUNCTION decrease_koszyk_cena();

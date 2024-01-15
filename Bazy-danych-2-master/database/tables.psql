@@ -1,0 +1,65 @@
+DROP TABLE if exists Pracownicy, Klienci, Towary, Administratorzy, Koszyki, Zamowienia, Towary_w_koszyku CASCADE;
+
+CREATE TABLE Pracownicy(
+   pracownikID INTEGER GENERATED ALWAYS AS IDENTITY not NULL,
+   login varchar(255) UNIQUE not NULL,
+   haslo varchar(255) not NULL,
+   imie varchar(255) not NULL,
+   nazwisko varchar(255) not NULL,
+   rola varchar(255) not NULL,
+   email varchar(255),
+   telefon varchar(255),
+   PRIMARY KEY(pracownikID)
+);
+ALTER TABLE Pracownicy
+   ADD CONSTRAINT typy_roli 
+   CHECK (rola = 'norm' OR rola = 'adm');
+
+
+CREATE TABLE Klienci(
+
+   klientID INTEGER GENERATED ALWAYS AS IDENTITY not NULL PRIMARY KEY,
+   login varchar(255) UNIQUE,
+   haslo varchar(255),
+   imie varchar(255) not NULL,
+   nazwisko varchar(255) not NULL,
+   adres varchar(255),
+   email varchar(255),
+   telefon varchar(255)
+);
+
+CREATE TABLE Koszyki(
+   koszykID INTEGER GENERATED ALWAYS AS IDENTITY not NULL,
+   klientID INTEGER not NULL REFERENCES Klienci,
+   cena numeric(19,2) not NULL CHECK (cena >= 0),
+   PRIMARY KEY(koszykID)
+);
+
+CREATE TABLE Towary(
+   towarID INTEGER GENERATED ALWAYS AS IDENTITY not NULL,
+   nazwa varchar(255) not NULL,
+   kategoria varchar(255) not NULL,
+   producent varchar(255) not NULL,
+   data_waznosci date,
+   cena numeric(19,2) not NULL CHECK (cena >= 0),
+   pracownikID INTEGER not NULL REFERENCES Pracownicy,
+   PRIMARY KEY(towarID)
+
+);
+
+CREATE Table Towary_w_koszyku(
+   towarKoszykID INTEGER GENERATED ALWAYS AS IDENTITY not NULL PRIMARY KEY,
+   towarID INTEGER not NULL REFERENCES Towary,
+   koszykID INTEGER not NULL REFERENCES Koszyki,
+   ilosc INTEGER not NULL CHECK (ilosc > 0)
+);
+CREATE TABLE Zamowienia(
+   koszykID INTEGER not NULL REFERENCES Koszyki PRIMARY KEY,
+   status varchar(255) DEFAULT 'zlozone' not NULL,
+   data_zlozenia DATE DEFAULT CURRENT_DATE not NULL,
+   adres varchar(255) not NULL,
+   pracownikID INTEGER REFERENCES Pracownicy  
+);
+ALTER TABLE Zamowienia
+   ADD CONSTRAINT statusType 
+   CHECK (status = 'zlozone' OR status = 'zatwierdzone' OR status = 'wyslane');

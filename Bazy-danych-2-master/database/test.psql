@@ -1,0 +1,6 @@
+select * from klienci;
+
+select * from pracownicy;
+
+select * from towary;
+
